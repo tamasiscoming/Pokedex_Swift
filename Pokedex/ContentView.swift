@@ -64,7 +64,7 @@ struct ContentView: View {
                     .tint(.yellow)
                 }
             }
-            .navigationTitle("Pokémon swipe to like")
+            .navigationTitle("Pokémon")
             .searchable(text: $searchText)
         }
     }
