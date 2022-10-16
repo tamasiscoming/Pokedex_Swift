@@ -6,21 +6,73 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct ContentView: View {
-    var pokemonModel = PokemonModel()
-    @State private var pokemon = [Pokemon]()
+    @ObservedObject var pokemonVM = PokemonViewModel()
+    @State private var searchText = ""
+    
+    var filteredPokemon: [Pokemon] {
+        if searchText == "" { return pokemonVM.pokemon }
+        return pokemonVM.pokemon.filter {
+            $0.name.lowercased().contains(searchText.lowercased())
+        }
+    }
+    
     var body: some View {
         NavigationView {
-            List(pokemon) { pokemon in
-                /*@START_MENU_TOKEN@*/Text(pokemon.name)/*@END_MENU_TOKEN@*/
+            List {
+                ForEach(filteredPokemon) { poke in
+                    NavigationLink(destination: PokemonDetailView(pokemon: poke)) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text(poke.name.capitalized)
+                                        .font(.title)
+                                    if poke.isFavorite {
+                                        Image(systemName: "star.fill")
+                                            .foregroundColor(.yellow)
+                                    }
+                                }
+                                HStack {
+                                    Text(poke.type.capitalized)
+                                        .italic()
+                                    Circle()
+                                        .foregroundColor(poke.typeColor)
+                                        .frame(width: 10, height: 10)
+                                }
+                                Text(poke.description)
+                                    .font(.caption)
+                                    .lineLimit(2)
+                            }
+                            
+                            Spacer()
+                            
+        //                    faster than asyncimage
+                            KFImage(URL(string: poke.imageURL))
+                                .interpolation(.none)
+                                .resizable()
+                                .frame(width: 100, height: 100)
+
+                        }
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(action: {addFavorite(pokemon: poke)}) {
+                            Image(systemName: "star")
+                        }
+                    }
+                    .tint(.yellow)
+                }
             }
+            .navigationTitle("Pokémon swipe to like")
+            .searchable(text: $searchText)
         }
-        .navigationTitle("Pokemon")
-        .onAppear {
-            async {
-                pokemon = try! await pokemonModel.getPokemon()
-            }
+    }
+    
+    func addFavorite(pokemon: Pokemon) {
+        if let index = pokemonVM.pokemon.firstIndex(where: {
+            $0.id == pokemon.id }) {
+            pokemonVM.pokemon[index].isFavorite.toggle()
         }
     }
 }
