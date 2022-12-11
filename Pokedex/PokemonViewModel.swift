@@ -72,7 +72,7 @@ class PokemonViewModel: ObservableObject {
     @Published var pokemon = [Pokemon]()
     
     init() {
-        async {
+        Task.init {
             pokemon = try await getPokemon()
         }
     }
